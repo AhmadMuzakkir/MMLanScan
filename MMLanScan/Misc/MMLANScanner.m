@@ -97,8 +97,22 @@
                 return;
             }
             //Since the first half of the operation is completed we will update our proggress by 0.5
-            weakSelf.currentHost = weakSelf.currentHost + 0.5;
-            
+            weakSelf.currentHost = weakSelf.currentHost + 1;
+
+			MMDevice *device = [[MMDevice alloc]init];
+			device.ipAddress = ip;
+
+			dispatch_async (dispatch_get_main_queue(), ^{
+				if ([weakSelf.delegate respondsToSelector:@selector(lanScanDidFindNewDevice:)]) {
+					[weakSelf.delegate lanScanDidFindNewDevice:device];
+				}
+			});
+
+			dispatch_async (dispatch_get_main_queue(), ^{
+				if ([weakSelf.delegate respondsToSelector:@selector(lanScanProgressPinged:from:)]) {
+					[weakSelf.delegate lanScanProgressPinged:self.currentHost from:[self.ipsToPing count]];
+				}
+			});
         }];
         
         //The Find MAC Address for each operation
@@ -119,7 +133,7 @@
                     }
                 });
             }
-            
+
             //Letting now the delegate the process  (on Main Thread)
             dispatch_async (dispatch_get_main_queue(), ^{
                 if ([weakSelf.delegate respondsToSelector:@selector(lanScanProgressPinged:from:)]) {
@@ -129,11 +143,11 @@
         }];
 
         //Adding dependancy on macOperation. For each IP there 2 operations (macOperation and pingOperation). The dependancy makes sure that macOperation will run after pingOperation
-        [macOperation addDependency:pingOperation];
+//        [macOperation addDependency:pingOperation];
         //Adding the operations in the queue
         [self.queue addOperation:pingOperation];
-        [self.queue addOperation:macOperation];
-        
+//        [self.queue addOperation:macOperation];
+
     }
 
 }
